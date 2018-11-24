@@ -1,6 +1,6 @@
-if([System.IO.Directory]::Exists("packages")) {
+if (Test-Path "packages") {
 
-	Remove-Item -Recurse -Force packages
+	Remove-Item -Recurse -Force "packages"
 }
  
 dotnet restore
