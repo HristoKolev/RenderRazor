@@ -51,7 +51,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\RenderRazor\RenderRazor.csproj">
+    <ProjectReference Include="..\..\src\RenderRazor\RenderRazor.csproj">
       <Project>{260e701d-540d-4598-a9fe-e79768b40399}</Project>
       <Name>RenderRazor</Name>
     </ProjectReference>

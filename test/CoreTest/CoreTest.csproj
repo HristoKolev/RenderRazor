@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\RenderRazor\RenderRazor.csproj" />
+    <ProjectReference Include="..\..\src\RenderRazor\RenderRazor.csproj" />
   </ItemGroup>
 
 </Project>

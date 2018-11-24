@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.102
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RenderRazor", "RenderRazor\RenderRazor.csproj", "{260E701D-540D-4598-A9FE-E79768B40399}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RenderRazor", "src\RenderRazor\RenderRazor.csproj", "{260E701D-540D-4598-A9FE-E79768B40399}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreTest", "CoreTest\CoreTest.csproj", "{34456350-540F-41C4-A26B-A0B180651BA1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreTest", "test\CoreTest\CoreTest.csproj", "{34456350-540F-41C4-A26B-A0B180651BA1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FullTest", "FullTest\FullTest.csproj", "{5A295E09-8847-402B-A1B0-37642D689226}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FullTest", "test\FullTest\FullTest.csproj", "{5A295E09-8847-402B-A1B0-37642D689226}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
