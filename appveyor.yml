@@ -1,0 +1,8 @@
+version: 1.0.{build}
+build_script:
+- cmd: >-
+    dotnet restore
+
+    dotnet build
+test_script:
+- cmd: dotnet test test/RenderRazor.Tests/RenderRazor.Tests.csproj
