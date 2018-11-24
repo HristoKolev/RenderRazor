@@ -25,8 +25,10 @@
             MetadataReference.CreateFromFile(Path.Combine(Path.GetDirectoryName(typeof(object).Assembly.Location), "netstandard.dll"))
         });
 
-        public static Func<T, Task<string>> Create<T>(byte[] templateBytes)
+        public static Func<T, Task<string>> Create<T>(string templateString)
         {
+            byte[] templateBytes = Encoding.UTF8.GetBytes(templateString);
+            
             string templateCode = CompileToCode<T>(templateBytes);
 
             var templateType = CompileToType<T>(templateCode);
