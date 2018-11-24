@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Reflection;
     using System.Text;
     using System.Threading.Tasks;
@@ -13,22 +14,22 @@
     using Microsoft.CodeAnalysis;
     using Microsoft.CodeAnalysis.CSharp;
 
-    public class Program
+    public static class RazorRenderer
     {
-        // initialize this on demand
-        private static readonly MetadataReference[] References = {
+        private static readonly Lazy<MetadataReference[]> References = new Lazy<MetadataReference[]>(() => new MetadataReference[]
+        {
             MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
             MetadataReference.CreateFromFile(typeof(RazorCompiledItemAttribute).Assembly.Location),
-            MetadataReference.CreateFromFile(Assembly.GetExecutingAssembly().Location),
+            MetadataReference.CreateFromFile(typeof(TemplateBase<>).Assembly.Location),
             MetadataReference.CreateFromFile(Path.Combine(Path.GetDirectoryName(typeof(object).Assembly.Location), "System.Runtime.dll")),
             MetadataReference.CreateFromFile(Path.Combine(Path.GetDirectoryName(typeof(object).Assembly.Location), "netstandard.dll"))
-        };
+        });
 
-        private static Func<T, Task<string>> GetRenderer<T>(byte[] templateBytes)
+        public static Func<T, Task<string>> Create<T>(byte[] templateBytes)
         {
             string templateCode = CompileToCode<T>(templateBytes);
 
-            var templateType = CompileToType(templateCode);
+            var templateType = CompileToType<T>(templateCode);
 
             return async model =>
             {
@@ -42,31 +43,34 @@
             };
         }
 
-        private static Type CompileToType(string templateCode)
+        private static Type CompileToType<T>(string templateCode)
         {
             var syntaxTrees = new[]
             {
                 CSharpSyntaxTree.ParseText(templateCode)
             };
 
-            var compilationOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
-            var compilation = CSharpCompilation.Create("test", syntaxTrees, References, compilationOptions);
+            var modelAssemblyReference = MetadataReference.CreateFromFile(typeof(T).Assembly.Location);
+            var allReferences = References.Value.Concat(new[] { modelAssemblyReference });
 
-            Type templateType;
+            var compilationOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, optimizationLevel: OptimizationLevel.Release);
+            var compilation = CSharpCompilation.Create("test", syntaxTrees, allReferences, compilationOptions);
 
-            using (var memStream = new MemoryStream())
+            Assembly generatedAssembly;
+
+            using (var peStream = new MemoryStream())
             {
-                var result = compilation.Emit(memStream);
+                var result = compilation.Emit(peStream);
 
                 if (!result.Success)
                 {
                     throw new ApplicationException($"An error occurred while compiling a template file. {string.Join(", ", result.Diagnostics)}");
                 }
 
-                var generatedAssembly = Assembly.Load(memStream.ToArray());
-
-                templateType = generatedAssembly.GetType($"{typeof(TemplateBase<>).Namespace}.Template");
+                generatedAssembly = Assembly.Load(peStream.ToArray());
             }
+
+            var templateType = generatedAssembly.GetType($"{typeof(TemplateBase<>).Namespace}.Template");
 
             return templateType;
         }
@@ -83,7 +87,7 @@
 
             string code = engine.Process(new InMemoryProjectItem(templateBytes)).GetCSharpDocument().GeneratedCode;
 
-            code = code.Replace($"DummyTemplate<{typeof(T).Name}>", $"DummyTemplate<{typeof(T).FullName}>");
+            code = code.Replace($"TemplateBase<{typeof(T).Name}>", $"TemplateBase<{typeof(T).FullName}>");
 
             return code;
         }
@@ -115,22 +119,22 @@
 
     internal class InMemoryProjectItem : RazorProjectItem
     {
-        private byte[] Bytes { get; }
+        private readonly byte[] bytes;
 
         public InMemoryProjectItem(byte[] bytes)
         {
-            this.Bytes = bytes;
+            this.bytes = bytes;
         }
 
         public override Stream Read()
         {
-            return new MemoryStream(this.Bytes);
+            return new MemoryStream(this.bytes);
         }
 
         // ReSharper disable once UnassignedGetOnlyAutoProperty
         public override string BasePath { get; }
 
-        public override string FilePath => "Y://Generated.ddd";
+        public override string FilePath => "DummyFilePath";
 
         // ReSharper disable once UnassignedGetOnlyAutoProperty
         public override string PhysicalPath { get; }
