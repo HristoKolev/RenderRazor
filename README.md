@@ -31,15 +31,16 @@ var model = new MyModel
 
 * Create a renderer:
 
-This is slow. When you create a renderer, be sure to reuse it.
+This is very slow. When you create a renderer, be sure to reuse it.
+This simple example executes 100 times for ~300ms.
 ```C#
 var render = RazorRenderer.Create<MyModel>(TemplateString);
 ```
 
 * Call the render:
-This is very fast. The simple 
+
+This is very fast. This simple example executes 1 000 000 times for ~300ms.
 ```C#
 string result = await render(model);
 Assert.Equal("Hello Cats, welcome to Razor World!", result);
 ```
-
