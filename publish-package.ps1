@@ -11,5 +11,3 @@ dotnet pack src\RenderRazor\RenderRazor.csproj -c release -o ./../../packages --
 $packageName = (dir packages | where { $_.Name -match '^RenderRazor\.\d+\.\d+\.\d+\.nupkg$' } | select -first 1).Name
 
 nuget push -ApiKey $env:nuget_key -source https://api.nuget.org/v3/index.json packages/$packageName
-
-pause
