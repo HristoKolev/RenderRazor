@@ -12,15 +12,17 @@ or
 Install-Package RenderRazor
 ```
 
-# How to use.
+# How to use
 
 * Razor template as a string:
+
+The first line should aways be: `@inherits TemplateBase<MyModel>` where `MyModel` is the .NET class that you want to use as the `@Model`. You can also use the `Fully Qualified Type Name` there if that helps you. :) 
 
 ```C#
 const string TemplateString = "@inherits TemplateBase<MyModel>\nHello @Model.Name, welcome to Razor World!";
 ```
 
-* The .NET class that you want to pass as the @model:
+* The .NET class that you want to pass as the @Model:
 
 ```C#
 var model = new MyModel
@@ -31,15 +33,17 @@ var model = new MyModel
 
 * Create a renderer:
 
-This is very slow. When you create a renderer, be sure to reuse it.
-This simple example executes 100 times for ~300ms.
+This is very slow.
+It calls both the Razor and the C# compillers.
+This simple example executes 100 times for ~300ms on my Intel I7-6700K Workstation.
+When you create a renderer, be sure to reuse it.
 ```C#
 var render = RazorRenderer.Create<MyModel>(TemplateString);
 ```
 
 * Call the render:
 
-This is very fast. This simple example executes 1 000 000 times for ~300ms.
+This is very fast. This simple example executes 1 000 000 times for ~300ms on my Intel I7-6700K Workstation.
 ```C#
 string result = await render(model);
 Assert.Equal("Hello Cats, welcome to Razor World!", result);
