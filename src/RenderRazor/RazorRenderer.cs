@@ -16,22 +16,23 @@
 
     public static class RazorRenderer
     {
-        private static readonly Lazy<MetadataReference[]> References = new Lazy<MetadataReference[]>(() => new MetadataReference[]
+        private static readonly Lazy<MetadataReference[]> DefaultReferences = new Lazy<MetadataReference[]>(() => new MetadataReference[]
         {
             MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
             MetadataReference.CreateFromFile(typeof(RazorCompiledItemAttribute).Assembly.Location),
             MetadataReference.CreateFromFile(typeof(TemplateBase<>).Assembly.Location),
             MetadataReference.CreateFromFile(Path.Combine(Path.GetDirectoryName(typeof(object).Assembly.Location), "System.Runtime.dll")),
+            MetadataReference.CreateFromFile(Path.Combine(Path.GetDirectoryName(typeof(object).Assembly.Location), "System.Collections.dll")),
             MetadataReference.CreateFromFile(Path.Combine(Path.GetDirectoryName(typeof(object).Assembly.Location), "netstandard.dll"))
         });
 
-        public static Func<T, Task<string>> Create<T>(string templateString)
+        public static Func<T, Task<string>> Create<T>(string templateString, Assembly[] referencedAssemblies = null)
         {
             byte[] templateBytes = Encoding.UTF8.GetBytes(templateString);
             
             string templateCode = CompileToCode<T>(templateBytes);
 
-            var templateType = CompileToType<T>(templateCode);
+            var templateType = CompileToType<T>(templateCode, referencedAssemblies);
 
             return async model =>
             {
@@ -45,7 +46,7 @@
             };
         }
 
-        private static Type CompileToType<T>(string templateCode)
+        private static Type CompileToType<T>(string templateCode, Assembly[] referencedAssemblies)
         {
             var syntaxTrees = new[]
             {
@@ -53,7 +54,12 @@
             };
 
             var modelAssemblyReference = MetadataReference.CreateFromFile(typeof(T).Assembly.Location);
-            var allReferences = References.Value.Concat(new[] { modelAssemblyReference });
+            var allReferences = DefaultReferences.Value.Concat(new[] { modelAssemblyReference }).ToList();
+
+            if (referencedAssemblies != null)
+            {
+                allReferences.AddRange(referencedAssemblies.Select(x => MetadataReference.CreateFromFile(x.Location)));
+            }
 
             var compilationOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, optimizationLevel: OptimizationLevel.Release);
             var compilation = CSharpCompilation.Create("test", syntaxTrees, allReferences, compilationOptions);
