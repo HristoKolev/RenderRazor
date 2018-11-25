@@ -33,18 +33,26 @@ var model = new MyModel
 
 * Create a renderer:
 
+```C#
+var render = new RazorRenderer<MyModel>(TemplateString);
+```
+
+* Call the compile method:
+
 This is very slow.
 It calls both the Razor and the C# compillers.
 This simple example executes 100 times for ~300ms on my Intel I7-6700K Workstation.
 When you create a renderer, be sure to reuse it.
+
 ```C#
-var render = RazorRenderer.Create<MyModel>(TemplateString);
+render.Compile();
 ```
 
 * Call the render:
 
-This is very fast. This simple example executes 1 000 000 times for ~300ms on my Intel I7-6700K Workstation.
+This is very fast. 
+This simple example executes 1 000 000 times for ~300ms on my Intel I7-6700K Workstation.
 ```C#
-string result = await render(model);
+string result = await render.Render(model);
 Assert.Equal("Hello Cats, welcome to Razor World!", result);
 ```
