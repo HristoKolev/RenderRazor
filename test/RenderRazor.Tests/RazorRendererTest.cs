@@ -20,9 +20,10 @@
                 }
             };
 
-            var render = RazorRenderer.Create<MyModel>(TemplateString);
+            var render = new RazorRenderer<MyModel>(TemplateString);
+            render.Compile();
 
-            string result = await render(model);
+            string result = await render.Render(model);
 
             Assert.Equal("1234", result);
         }
@@ -44,9 +45,10 @@
                 }
             };
 
-            var render = RazorRenderer.Create<MyModel>(TemplateString);
+            var render = new RazorRenderer<MyModel>(TemplateString);
+            render.Compile();
 
-            string result = await render(model);
+            string result = await render.Render(model);
 
             Assert.Equal("Hello Cats, welcome to Razor World!", result);
         }

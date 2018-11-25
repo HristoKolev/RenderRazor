@@ -14,39 +14,34 @@
     using Microsoft.CodeAnalysis;
     using Microsoft.CodeAnalysis.CSharp;
 
-    public static class RazorRenderer
+    public class RazorRenderer<T>
     {
-        private static readonly Lazy<MetadataReference[]> DefaultReferences = new Lazy<MetadataReference[]>(() => new MetadataReference[]
+        public string TemplateString { get; }
+
+        private readonly Assembly[] referencedAssemblies;
+
+        public string TemplateCode { get; private set; }
+
+        private Type TemplateType { get; set; }
+
+        public RazorRenderer(string templateString, Assembly[] referencedAssemblies = null)
         {
-            MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-            MetadataReference.CreateFromFile(typeof(RazorCompiledItemAttribute).Assembly.Location),
-            MetadataReference.CreateFromFile(typeof(TemplateBase<>).Assembly.Location),
-            MetadataReference.CreateFromFile(Path.Combine(Path.GetDirectoryName(typeof(object).Assembly.Location), "System.Runtime.dll")),
-            MetadataReference.CreateFromFile(Path.Combine(Path.GetDirectoryName(typeof(object).Assembly.Location), "System.Collections.dll")),
-            MetadataReference.CreateFromFile(Path.Combine(Path.GetDirectoryName(typeof(object).Assembly.Location), "netstandard.dll"))
-        });
-
-        public static Func<T, Task<string>> Create<T>(string templateString, Assembly[] referencedAssemblies = null)
-        {
-            byte[] templateBytes = Encoding.UTF8.GetBytes(templateString);
-            
-            string templateCode = CompileToCode<T>(templateBytes);
-
-            var templateType = CompileToType<T>(templateCode, referencedAssemblies);
-
-            return async model =>
-            {
-                var template = (TemplateBase<T>)Activator.CreateInstance(templateType);
-
-                template.Model = model;
-
-                await template.ExecuteAsync();
-
-                return template.Result;
-            };
+            this.TemplateString = templateString;
+            this.referencedAssemblies = referencedAssemblies;
         }
 
-        private static Type CompileToType<T>(string templateCode, Assembly[] referencedAssemblies)
+        public void Compile()
+        {
+            byte[] templateBytes = Encoding.UTF8.GetBytes(this.TemplateString);
+
+            string templateCode = CompileToCode(templateBytes);
+            this.TemplateCode = templateCode;
+
+            var templateType = CompileToType(templateCode, this.referencedAssemblies);
+            this.TemplateType = templateType;
+        }
+
+        private static Type CompileToType(string templateCode, Assembly[] referencedAssemblies)
         {
             var syntaxTrees = new[]
             {
@@ -54,7 +49,7 @@
             };
 
             var modelAssemblyReference = MetadataReference.CreateFromFile(typeof(T).Assembly.Location);
-            var allReferences = DefaultReferences.Value.Concat(new[] { modelAssemblyReference }).ToList();
+            var allReferences = RazorRendererStore.DefaultReferences.Value.Concat(new[] { modelAssemblyReference }).ToList();
 
             if (referencedAssemblies != null)
             {
@@ -83,7 +78,7 @@
             return templateType;
         }
 
-        private static string CompileToCode<T>(byte[] templateBytes)
+        private static string CompileToCode(byte[] templateBytes)
         {
             var fs = new DummyFs();
 
@@ -99,6 +94,17 @@
 
             return code;
         }
+
+        public async Task<string> Render(T model)
+        {
+            var template = (TemplateBase<T>)Activator.CreateInstance(this.TemplateType);
+
+            template.Model = model;
+            await template.ExecuteAsync();
+
+            return template.Result;
+        }
+
     }
 
     public abstract class TemplateBase<T>
@@ -123,6 +129,19 @@
         {
             return Task.CompletedTask;
         }
+    }
+
+    internal class RazorRendererStore
+    {
+        public static readonly Lazy<MetadataReference[]> DefaultReferences = new Lazy<MetadataReference[]>(() => new MetadataReference[]
+        {
+            MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+            MetadataReference.CreateFromFile(typeof(RazorCompiledItemAttribute).Assembly.Location),
+            MetadataReference.CreateFromFile(typeof(TemplateBase<>).Assembly.Location),
+            MetadataReference.CreateFromFile(Path.Combine(Path.GetDirectoryName(typeof(object).Assembly.Location), "System.Runtime.dll")),
+            MetadataReference.CreateFromFile(Path.Combine(Path.GetDirectoryName(typeof(object).Assembly.Location), "System.Collections.dll")),
+            MetadataReference.CreateFromFile(Path.Combine(Path.GetDirectoryName(typeof(object).Assembly.Location), "netstandard.dll"))
+        });
     }
 
     internal class InMemoryProjectItem : RazorProjectItem
