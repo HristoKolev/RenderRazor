@@ -104,7 +104,6 @@
 
             return template.Result;
         }
-
     }
 
     public abstract class TemplateBase<T>
@@ -131,7 +130,7 @@
         }
     }
 
-    internal class RazorRendererStore
+    internal static class RazorRendererStore
     {
         public static readonly Lazy<MetadataReference[]> DefaultReferences = new Lazy<MetadataReference[]>(() => new MetadataReference[]
         {
@@ -139,6 +138,7 @@
             MetadataReference.CreateFromFile(typeof(RazorCompiledItemAttribute).Assembly.Location),
             MetadataReference.CreateFromFile(typeof(TemplateBase<>).Assembly.Location),
             MetadataReference.CreateFromFile(Path.Combine(Path.GetDirectoryName(typeof(object).Assembly.Location), "System.Runtime.dll")),
+            MetadataReference.CreateFromFile(Path.Combine(Path.GetDirectoryName(typeof(object).Assembly.Location), "System.Linq.dll")),
             MetadataReference.CreateFromFile(Path.Combine(Path.GetDirectoryName(typeof(object).Assembly.Location), "System.Collections.dll")),
             MetadataReference.CreateFromFile(Path.Combine(Path.GetDirectoryName(typeof(object).Assembly.Location), "netstandard.dll"))
         });
